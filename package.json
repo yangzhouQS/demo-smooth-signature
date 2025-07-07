@@ -1,0 +1,22 @@
+{
+  "name": "demo-smooth-signature",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rsbuild build",
+    "dev": "rsbuild dev",
+    "preview": "rsbuild preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "element-plus": "^2.10.3",
+    "vue": "^3.5.17"
+  },
+  "devDependencies": {
+    "@rsbuild/core": "^1.4.2",
+    "@rsbuild/plugin-less": "^1.2.5",
+    "@rsbuild/plugin-vue": "^1.0.7",
+    "typescript": "^5.8.3"
+  }
+}

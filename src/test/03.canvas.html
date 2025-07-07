@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas中文文本展示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#3B82F6',
+              secondary: '#10B981',
+              neutral: '#F3F4F6',
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          }
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .canvas-container {
+                @apply relative w-full bg-white rounded-lg shadow-lg overflow-hidden;
+            }
+            .control-panel {
+                @apply grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg;
+            }
+            .control-group {
+                @apply flex flex-col;
+            }
+            .control-label {
+                @apply text-sm font-medium text-gray-700 mb-1;
+            }
+            .control-input {
+                @apply px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+            .signature-pad {
+                @apply border-2 border-dashed border-gray-300 cursor-crosshair;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 font-sans">
+<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden">
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-6">
+        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-2">Canvas签名演示</h1>
+        <p class="text-gray-100">在HTML Canvas中实现签名功能</p>
+    </header>
+
+    <main class="p-6">
+        <div class="mb-4 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">签名区域</h2>
+            <div class="flex space-x-2">
+                <button id="clearBtn" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors flex items-center">
+                    <i class="fa fa-eraser mr-1"></i> 清除
+                </button>
+                <button id="exportBtn" class="px-3 py-1.5 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors flex items-center">
+                    <i class="fa fa-download mr-1"></i> 导出签名
+                </button>
+            </div>
+        </div>
+
+        <div class="canvas-container h-[300px] mb-6">
+            <canvas id="signatureCanvas" class="w-full h-full signature-pad"></canvas>
+            <div id="signatureHint" class="absolute inset-0 flex items-center justify-center text-gray-400 text-lg pointer-events-none">
+                请在上方区域签名
+            </div>
+        </div>
+
+        <div id="exportPreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">导出预览</h3>
+            <div class="relative">
+                <img id="previewImg" class="max-w-full border border-gray-200 rounded" alt="签名预览">
+                <div id="emptySignature" class="hidden absolute inset-0 flex items-center justify-center text-gray-400 text-lg">
+                    没有检测到签名内容
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 p-4 rounded-lg mt-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-2 flex items-center">
+                <i class="fa fa-info-circle mr-2"></i>使用说明
+            </h3>
+            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                <li>在白色区域使用鼠标或触摸屏幕进行签名</li>
+                <li>点击"清除"按钮可以重新开始签名</li>
+                <li>点击"导出签名"按钮生成并下载签名图片</li>
+                <li>导出的图片将不包含提示文字，仅保留签名内容</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 text-center">
+        <p>© 2025 Canvas签名演示 | 使用Tailwind CSS和Font Awesome构建</p>
+    </footer>
+</div>
+
+<script>
+  // 获取DOM元素
+  const signatureCanvas = document.getElementById('signatureCanvas');
+  const signatureCtx = signatureCanvas.getContext('2d');
+  const signatureHint = document.getElementById('signatureHint');
+  const clearBtn = document.getElementById('clearBtn');
+  const exportBtn = document.getElementById('exportBtn');
+  const exportPreview = document.getElementById('exportPreview');
+  const previewImg = document.getElementById('previewImg');
+  const emptySignature = document.getElementById('emptySignature');
+
+  let signaturePoints = []; // 存储签名点数据
+  // 设置Canvas尺寸
+  function resizeSignatureCanvas() {
+    const container = signatureCanvas.parentElement;
+    signatureCanvas.width = container.clientWidth;
+    signatureCanvas.height = container.clientHeight;
+
+    // 如果已经有签名数据，重新绘制
+    if (signaturePoints.length > 0) {
+      redrawSignature();
+    }
+  }
+
+  // 初始化时调整Canvas尺寸
+  resizeSignatureCanvas();
+
+  // 窗口大小变化时调整Canvas尺寸
+  window.addEventListener('resize', resizeSignatureCanvas);
+
+  // 签名相关变量
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  // 设置签名样式
+  function setupSignatureStyle() {
+    signatureCtx.strokeStyle = '#333';
+    signatureCtx.lineWidth = 2;
+    signatureCtx.lineCap = 'round';
+    signatureCtx.lineJoin = 'round';
+  }
+
+  // 开始绘制
+  function startDrawing(e) {
+    isDrawing = true;
+    const { offsetX, offsetY } = getCanvasCoordinates(e);
+    [lastX, lastY] = [offsetX, offsetY];
+
+    // 隐藏提示
+    signatureHint.classList.add('opacity-0');
+    setTimeout(() => {
+      if (signaturePoints.length === 0) {
+        signatureHint.classList.add('hidden');
+      }
+    }, 300);
+
+    // 记录第一个点
+    signaturePoints.push({ x: offsetX, y: offsetY, moveTo: true });
+  }
+
+  // 绘制
+  function draw(e) {
+    if (!isDrawing) return;
+
+    const { offsetX, offsetY } = getCanvasCoordinates(e);
+
+    signatureCtx.beginPath();
+    // 如果是新的起点
+    if (signaturePoints.length === 0) {
+      signatureCtx.moveTo(offsetX, offsetY);
+      signaturePoints.push({ x: offsetX, y: offsetY, moveTo: true });
+    } else {
+      // 从上一个点开始
+      signatureCtx.moveTo(lastX, lastY);
+      // 绘制到当前点
+      signatureCtx.lineTo(offsetX, offsetY);
+      signaturePoints.push({ x: offsetX, y: offsetY, moveTo: false });
+    }
+
+    signatureCtx.stroke();
+    [lastX, lastY] = [offsetX, offsetY];
+  }
+
+  // 结束绘制
+  function stopDrawing() {
+    isDrawing = false;
+    signatureCtx.closePath();
+
+    // 如果有签名内容，显示导出预览
+    if (signaturePoints.length > 0) {
+      exportPreview.classList.remove('hidden');
+      updateExportPreview();
+    }
+  }
+
+  // 根据事件获取Canvas坐标
+  function getCanvasCoordinates(e) {
+    const rect = signatureCanvas.getBoundingClientRect();
+    let x, y;
+
+    if (e.type.includes('mouse')) {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    } else if (e.type.includes('touch')) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    }
+
+    return { offsetX: x, offsetY: y };
+  }
+
+  // 重新绘制签名
+  function redrawSignature() {
+    setupSignatureStyle();
+    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+
+    if (signaturePoints.length === 0) return;
+
+    signatureCtx.beginPath();
+
+    for (let i = 0; i < signaturePoints.length; i++) {
+      const point = signaturePoints[i];
+      if (point.moveTo) {
+        signatureCtx.moveTo(point.x, point.y);
+      } else {
+        signatureCtx.lineTo(point.x, point.y);
+      }
+    }
+
+    signatureCtx.stroke();
+    signatureCtx.closePath();
+  }
+
+  // 清除签名
+  function clearSignature() {
+    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+    signaturePoints = [];
+    signatureHint.classList.remove('hidden', 'opacity-0');
+    exportPreview.classList.add('hidden');
+  }
+
+  // 更新导出预览
+  function updateExportPreview() {
+    // 创建临时Canvas用于导出
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = signatureCanvas.width;
+    tempCanvas.height = signatureCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // 复制签名到临时Canvas
+    redrawSignatureToCanvas(tempCtx);
+
+    // 更新预览图片
+    previewImg.src = tempCanvas.toDataURL('image/png');
+
+    // 检查是否有签名内容
+    if (signaturePoints.length > 0) {
+      emptySignature.classList.add('hidden');
+    } else {
+      emptySignature.classList.remove('hidden');
+    }
+  }
+
+  // 将签名绘制到指定Canvas
+  function redrawSignatureToCanvas(ctx) {
+    ctx.strokeStyle = '#333';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    if (signaturePoints.length === 0) return;
+
+    ctx.beginPath();
+
+    for (let i = 0; i < signaturePoints.length; i++) {
+      const point = signaturePoints[i];
+      if (point.moveTo) {
+        ctx.moveTo(point.x, point.y);
+      } else {
+        ctx.lineTo(point.x, point.y);
+      }
+    }
+
+    ctx.stroke();
+    ctx.closePath();
+  }
+
+  // 导出签名
+  function exportSignature() {
+    if (signaturePoints.length === 0) {
+      alert('请先完成签名');
+      return;
+    }
+
+    // 创建临时Canvas用于导出
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = signatureCanvas.width;
+    tempCanvas.height = signatureCanvas.height;
+    const tempCtx = tempCanvas.getContext('2d');
+
+    // 只绘制签名，不绘制提示文字
+    redrawSignatureToCanvas(tempCtx);
+
+    // 创建下载链接
+    const link = document.createElement('a');
+    link.download = 'signature.png';
+    link.href = tempCanvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // 设置事件监听
+  function setupEventListeners() {
+    // 鼠标事件
+    signatureCanvas.addEventListener('mousedown', startDrawing);
+    signatureCanvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDrawing);
+    window.addEventListener('mouseout', stopDrawing);
+
+    // 触摸事件
+    signatureCanvas.addEventListener('touchstart', startDrawing, { passive: true });
+    signatureCanvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      draw(e);
+    }, { passive: false });
+    signatureCanvas.addEventListener('touchend', stopDrawing);
+    signatureCanvas.addEventListener('touchcancel', stopDrawing);
+
+    // 清除按钮
+    clearBtn.addEventListener('click', clearSignature);
+
+    // 导出按钮
+    exportBtn.addEventListener('click', exportSignature);
+  }
+
+  // 初始化
+  function init() {
+    setupSignatureStyle();
+    setupEventListeners();
+  }
+
+  // 启动应用
+  init();
+</script>
+</body>
+</html>

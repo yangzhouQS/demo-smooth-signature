@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多层Canvas文本与签名演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#3B82F6',
+              secondary: '#10B981',
+              neutral: '#F3F4F6',
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          }
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .canvas-container {
+                @apply relative w-full bg-white rounded-lg shadow-lg overflow-hidden;
+            }
+            .control-panel {
+                @apply grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg;
+            }
+            .control-group {
+                @apply flex flex-col;
+            }
+            .control-label {
+                @apply text-sm font-medium text-gray-700 mb-1;
+            }
+            .control-input {
+                @apply px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+            .signature-pad {
+                @apply border-2 border-dashed border-gray-300 cursor-crosshair;
+            }
+            .canvas-stack {
+                @apply relative w-full h-[300px];
+            }
+            .canvas-layer {
+                @apply absolute top-0 left-0 w-full h-full;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 font-sans">
+<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden">
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-6">
+        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-2">多层Canvas文本与签名演示</h1>
+        <p class="text-gray-100">在HTML Canvas中实现多层绘制与独立导出</p>
+    </header>
+
+    <main class="p-6">
+        <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-3">文本设置</h2>
+            <div class="control-panel">
+                <div class="control-group">
+                    <label for="textInput" class="control-label">输入文本</label>
+                    <input type="text" id="textInput" class="control-input" placeholder="请输入中文文本" value="示例文本">
+                </div>
+
+                <div class="control-group">
+                    <label for="fontFamily" class="control-label">选择字体</label>
+                    <select id="fontFamily" class="control-input">
+                        <option value="SimHei">黑体</option>
+                        <option value="Microsoft YaHei">微软雅黑</option>
+                        <option value="SimSun">宋体</option>
+                        <option value="KaiTi">楷体</option>
+                        <option value="FangSong">仿宋</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontSize" class="control-label">字体大小</label>
+                    <input type="range" id="fontSize" min="12" max="72" value="36" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>12px</span>
+                        <span id="fontSizeValue">36px</span>
+                        <span>72px</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontWeight" class="control-label">字体粗细</label>
+                    <select id="fontWeight" class="control-input">
+                        <option value="normal">正常</option>
+                        <option value="bold">加粗</option>
+                        <option value="bolder">更粗</option>
+                        <option value="lighter">更细</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="300">300</option>
+                        <option value="400">400</option>
+                        <option value="500">500</option>
+                        <option value="600">600</option>
+                        <option value="700">700</option>
+                        <option value="800">800</option>
+                        <option value="900">900</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="fontStyle" class="control-label">字体样式</label>
+                    <select id="fontStyle" class="control-input">
+                        <option value="normal">正常</option>
+                        <option value="italic">斜体</option>
+                        <option value="oblique">倾斜</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="textAlign" class="control-label">文本对齐</label>
+                    <select id="textAlign" class="control-input">
+                        <option value="left">左对齐</option>
+                        <option value="center">居中</option>
+                        <option value="right">右对齐</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="textStyle" class="control-label">文本样式</label>
+                    <select id="textStyle" class="control-input">
+                        <option value="fill">填充</option>
+                        <option value="stroke">描边</option>
+                        <option value="fill-stroke">填充+描边</option>
+                        <option value="dashed">虚线描边</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="strokeWidth" class="control-label">描边宽度</label>
+                    <input type="range" id="strokeWidth" min="1" max="10" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>1px</span>
+                        <span id="strokeWidthValue">2px</span>
+                        <span>10px</span>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="dashLength" class="control-label">虚线长度</label>
+                    <input type="range" id="dashLength" min="1" max="20" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>短</span>
+                        <span id="dashLengthValue">10</span>
+                        <span>长</span>
+                    </div>
+                </div>
+
+                <div class="control-group md:col-span-3">
+                    <label for="textColor" class="control-label">文本颜色</label>
+                    <input type="color" id="textColor" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer" value="#333333">
+                </div>
+
+                <div class="control-group md:col-span-3">
+                    <label for="strokeColor" class="control-label">描边颜色</label>
+                    <input type="color" id="strokeColor" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer" value="#3B82F6">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4 flex justify-between items-center">
+            <h2 class="text-xl font-semibold text-gray-800">绘制区域</h2>
+            <div class="flex space-x-2">
+                <button id="updateTextBtn" class="px-3 py-1.5 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors flex items-center">
+                    <i class="fa fa-refresh mr-1"></i> 更新文本
+                </button>
+                <button id="clearSignatureBtn" class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors flex items-center">
+                    <i class="fa fa-eraser mr-1"></i> 清除签名
+                </button>
+                <button id="exportSignatureBtn" class="px-3 py-1.5 bg-secondary text-white rounded-md hover:bg-secondary/90 transition-colors flex items-center">
+                    <i class="fa fa-download mr-1"></i> 导出签名
+                </button>
+                <button id="exportAllBtn" class="px-3 py-1.5 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center">
+                    <i class="fa fa-download mr-1"></i> 导出全部
+                </button>
+            </div>
+        </div>
+
+        <div class="canvas-container mb-6">
+            <div class="canvas-stack">
+                <canvas id="textCanvas" class="canvas-layer"></canvas>
+                <canvas id="signatureCanvas" class="canvas-layer signature-pad"></canvas>
+            </div>
+            <div id="signatureHint" class="absolute inset-0 flex items-center justify-center text-gray-400 text-lg pointer-events-none">
+                请在上方区域签名
+            </div>
+        </div>
+
+        <div id="exportPreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">导出预览</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <h4 class="text-sm font-medium text-gray-600 mb-1">仅签名</h4>
+                    <div class="relative">
+                        <img id="signaturePreview" class="w-full border border-gray-200 rounded" alt="签名预览">
+                        <div id="emptySignature" class="hidden absolute inset-0 flex items-center justify-center text-gray-400 text-lg">
+                            没有检测到签名内容
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-600 mb-1">文本与签名</h4>
+                    <div class="relative">
+                        <img id="combinedPreview" class="w-full border border-gray-200 rounded" alt="组合预览">
+                        <div id="emptyCombined" class="hidden absolute inset-0 flex items-center justify-center text-gray-400 text-lg">
+                            没有内容可预览
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 p-4 rounded-lg mt-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-2 flex items-center">
+                <i class="fa fa-info-circle mr-2"></i>使用说明
+            </h3>
+            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                <li>调整上方文本设置，点击"更新文本"按钮在底层Canvas上绘制文本</li>
+                <li>在Canvas上使用鼠标或触摸屏幕进行签名（第二层Canvas）</li>
+                <li>点击"清除签名"按钮可以重新开始签名</li>
+                <li>点击"导出签名"按钮仅导出签名部分（不包含底层文本）</li>
+                <li>点击"导出全部"按钮导出文本和签名的组合图像</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 text-center">
+        <p>© 2025 多层Canvas演示 | 使用Tailwind CSS和Font Awesome构建</p>
+    </footer>
+</div>
+
+<script>
+  // 获取DOM元素
+  const textCanvas = document.getElementById('textCanvas');
+  const textCtx = textCanvas.getContext('2d');
+
+  const signatureCanvas = document.getElementById('signatureCanvas');
+  const signatureCtx = signatureCanvas.getContext('2d');
+  const signatureHint = document.getElementById('signatureHint');
+  const updateTextBtn = document.getElementById('updateTextBtn');
+  const clearSignatureBtn = document.getElementById('clearSignatureBtn');
+  const exportSignatureBtn = document.getElementById('exportSignatureBtn');
+  const exportAllBtn = document.getElementById('exportAllBtn');
+  const exportPreview = document.getElementById('exportPreview');
+  const signaturePreview = document.getElementById('signaturePreview');
+  const combinedPreview = document.getElementById('combinedPreview');
+  const emptySignature = document.getElementById('emptySignature');
+  const emptyCombined = document.getElementById('emptyCombined');
+
+  // 获取文本设置控件
+  const textInput = document.getElementById('textInput');
+  const fontFamily = document.getElementById('fontFamily');
+  const fontSize = document.getElementById('fontSize');
+  const fontSizeValue = document.getElementById('fontSizeValue');
+  const fontWeight = document.getElementById('fontWeight');
+  const fontStyle = document.getElementById('fontStyle');
+  const textAlign = document.getElementById('textAlign');
+  const textStyle = document.getElementById('textStyle');
+  const strokeWidth = document.getElementById('strokeWidth');
+  const strokeWidthValue = document.getElementById('strokeWidthValue');
+  const dashLength = document.getElementById('dashLength');
+  const dashLengthValue = document.getElementById('dashLengthValue');
+  const textColor = document.getElementById('textColor');
+  const strokeColor = document.getElementById('strokeColor');
+  let signaturePoints = []; // 存储签名点数据
+
+  // 设置Canvas尺寸
+  function resizeCanvases() {
+    const container = textCanvas.parentElement.parentElement;
+    const width = container.clientWidth;
+    const height = 300; // 固定高度
+
+    // 设置两个Canvas的尺寸
+    [textCanvas, signatureCanvas].forEach(canvas => {
+      canvas.width = width;
+      canvas.height = height;
+    });
+
+    // 重绘文本
+    drawText();
+
+    // 如果已经有签名数据，重新绘制
+    if (signaturePoints.length > 0) {
+      redrawSignature();
+    }
+  }
+
+  // 初始化时调整Canvas尺寸
+  resizeCanvases();
+
+  // 窗口大小变化时调整Canvas尺寸
+  window.addEventListener('resize', resizeCanvases);
+
+  // 更新字体大小显示
+  fontSize.addEventListener('input', () => {
+    fontSizeValue.textContent = `${fontSize.value}px`;
+  });
+
+  // 更新描边宽度显示
+  strokeWidth.addEventListener('input', () => {
+    strokeWidthValue.textContent = `${strokeWidth.value}px`;
+  });
+
+  // 更新虚线长度显示
+  dashLength.addEventListener('input', () => {
+    dashLengthValue.textContent = dashLength.value;
+  });
+
+  // 签名相关变量
+  let isDrawing = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  // 设置签名样式
+  function setupSignatureStyle() {
+    signatureCtx.strokeStyle = '#333';
+    signatureCtx.lineWidth = 2;
+    signatureCtx.lineCap = 'round';
+    signatureCtx.lineJoin = 'round';
+  }
+
+  // 开始绘制签名
+  function startDrawing(e) {
+    isDrawing = true;
+    const { offsetX, offsetY } = getCanvasCoordinates(e, signatureCanvas);
+    [lastX, lastY] = [offsetX, offsetY];
+
+    // 隐藏提示
+    signatureHint.classList.add('opacity-0');
+    setTimeout(() => {
+      if (signaturePoints.length === 0) {
+        signatureHint.classList.add('hidden');
+      }
+    }, 300);
+
+    // 记录第一个点
+    signaturePoints.push({ x: offsetX, y: offsetY, moveTo: true });
+  }
+
+  // 绘制签名
+  function draw(e) {
+    if (!isDrawing) return;
+
+    const { offsetX, offsetY } = getCanvasCoordinates(e, signatureCanvas);
+
+    signatureCtx.beginPath();
+    // 如果是新的起点
+    if (signaturePoints.length === 0) {
+      signatureCtx.moveTo(offsetX, offsetY);
+      signaturePoints.push({ x: offsetX, y: offsetY, moveTo: true });
+    } else {
+      // 从上一个点开始
+      signatureCtx.moveTo(lastX, lastY);
+      // 绘制到当前点
+      signatureCtx.lineTo(offsetX, offsetY);
+      signaturePoints.push({ x: offsetX, y: offsetY, moveTo: false });
+    }
+
+    signatureCtx.stroke();
+    [lastX, lastY] = [offsetX, offsetY];
+  }
+
+  // 结束绘制签名
+  function stopDrawing() {
+    isDrawing = false;
+    signatureCtx.closePath();
+
+    // 如果有签名内容，显示导出预览
+    updateExportPreviews();
+  }
+
+  // 根据事件获取Canvas坐标
+  function getCanvasCoordinates(e, canvas) {
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+
+    if (e.type.includes('mouse')) {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    } else if (e.type.includes('touch')) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    }
+
+    return { offsetX: x, offsetY: y };
+  }
+
+  // 重新绘制签名
+  function redrawSignature() {
+    setupSignatureStyle();
+    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+
+    if (signaturePoints.length === 0) return;
+
+    signatureCtx.beginPath();
+
+    for (let i = 0; i < signaturePoints.length; i++) {
+      const point = signaturePoints[i];
+      if (point.moveTo) {
+        signatureCtx.moveTo(point.x, point.y);
+      } else {
+        signatureCtx.lineTo(point.x, point.y);
+      }
+    }
+
+    signatureCtx.stroke();
+    signatureCtx.closePath();
+  }
+
+  // 清除签名
+  function clearSignature() {
+    signatureCtx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+    signaturePoints = [];
+    signatureHint.classList.remove('hidden', 'opacity-0');
+    updateExportPreviews();
+  }
+
+  // 绘制文本
+  function drawText() {
+    // 清除Canvas
+    textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+
+    // 获取当前设置值
+    const text = textInput.value || '请输入文本';
+    const size = fontSize.value;
+    const weight = fontWeight.value;
+    const style = fontStyle.value;
+    const family = fontFamily.value;
+    const align = textAlign.value;
+    const styleType = textStyle.value;
+    const strokeSize = parseInt(strokeWidth.value);
+    const dashSize = parseInt(dashLength.value);
+    const fillColor = textColor.value;
+    const stroke = strokeColor.value;
+
+    // 设置字体
+    textCtx.font = `${style} ${weight} ${size}px "${family}", sans-serif`;
+
+    console.log('textCtx.font = ',textCtx.font);
+
+    // 设置文本对齐
+    textCtx.textAlign = align;
+    textCtx.textBaseline = 'middle';
+
+    // 计算文本位置
+    let x = textCanvas.width / 2; // 默认居中
+    if (align === 'left') x = 40;
+    if (align === 'right') x = textCanvas.width - 40;
+
+    const y = textCanvas.height / 2;
+
+    // 根据选择的样式绘制文本
+    switch(styleType) {
+      case 'fill':
+        // 填充文本
+        textCtx.fillStyle = fillColor;
+        textCtx.fillText(text, x, y);
+        break;
+
+      case 'stroke':
+        // 描边文本
+        textCtx.strokeStyle = stroke;
+        textCtx.lineWidth = strokeSize;
+        textCtx.strokeText(text, x, y);
+        break;
+
+      case 'fill-stroke':
+        // 填充+描边文本
+        textCtx.fillStyle = fillColor;
+        textCtx.fillText(text, x, y);
+
+        textCtx.strokeStyle = stroke;
+        textCtx.lineWidth = strokeSize;
+        textCtx.strokeText(text, x, y);
+        break;
+
+      case 'dashed':
+        // 虚线描边文本
+        textCtx.strokeStyle = stroke;
+        textCtx.lineWidth = strokeSize;
+
+        // 设置虚线样式
+        textCtx.setLineDash([dashSize, dashSize]);
+
+        // 绘制文本路径
+        textCtx.strokeText(text, x, y);
+
+        // 重置虚线样式
+        textCtx.setLineDash([]);
+        break;
+    }
+
+    // 更新组合预览
+    updateExportPreviews();
+  }
+
+  // 更新导出预览
+  function updateExportPreviews() {
+    // 显示预览区域
+    exportPreview.classList.remove('hidden');
+
+    // 更新签名预览
+    if (signaturePoints.length > 0) {
+      signaturePreview.src = signatureCanvas.toDataURL('image/png');
+      emptySignature.classList.add('hidden');
+    } else {
+      emptySignature.classList.remove('hidden');
+    }
+
+    // 更新组合预览
+    const combinedCanvas = document.createElement('canvas');
+    combinedCanvas.width = textCanvas.width;
+    combinedCanvas.height = textCanvas.height;
+    const combinedCtx = combinedCanvas.getContext('2d');
+
+    // 绘制文本
+    combinedCtx.drawImage(textCanvas, 0, 0);
+
+    // 绘制签名
+    if (signaturePoints.length > 0) {
+      combinedCtx.drawImage(signatureCanvas, 0, 0);
+      emptyCombined.classList.add('hidden');
+    } else {
+      emptyCombined.classList.remove('hidden');
+    }
+
+    combinedPreview.src = combinedCanvas.toDataURL('image/png');
+  }
+
+  // 导出签名
+  function exportSignature() {
+    if (signaturePoints.length === 0) {
+      alert('请先完成签名');
+      return;
+    }
+
+    // 创建下载链接
+    const link = document.createElement('a');
+    link.download = 'signature.png';
+    link.href = signatureCanvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // 导出全部
+  function exportAll() {
+    const combinedCanvas = document.createElement('canvas');
+    combinedCanvas.width = textCanvas.width;
+    combinedCanvas.height = textCanvas.height;
+    const combinedCtx = combinedCanvas.getContext('2d');
+
+    // 绘制文本
+    combinedCtx.drawImage(textCanvas, 0, 0);
+
+    // 绘制签名
+    if (signaturePoints.length > 0) {
+      combinedCtx.drawImage(signatureCanvas, 0, 0);
+    }
+
+    // 创建下载链接
+    const link = document.createElement('a');
+    link.download = 'combined.png';
+    link.href = combinedCanvas.toDataURL('image/png');
+    link.click();
+  }
+
+  // 设置事件监听
+  function setupEventListeners() {
+    // 鼠标事件
+    signatureCanvas.addEventListener('mousedown', startDrawing);
+    signatureCanvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', stopDrawing);
+    window.addEventListener('mouseout', stopDrawing);
+
+    // 触摸事件
+    signatureCanvas.addEventListener('touchstart', startDrawing, { passive: true });
+    signatureCanvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      draw(e);
+    }, { passive: false });
+    signatureCanvas.addEventListener('touchend', stopDrawing);
+    signatureCanvas.addEventListener('touchcancel', stopDrawing);
+
+    // 清除按钮
+    clearSignatureBtn.addEventListener('click', clearSignature);
+
+    // 导出按钮
+    exportSignatureBtn.addEventListener('click', exportSignature);
+    exportAllBtn.addEventListener('click', exportAll);
+
+    // 更新文本按钮
+    updateTextBtn.addEventListener('click', drawText);
+  }
+
+  // 初始化
+  function init() {
+    setupSignatureStyle();
+    setupEventListeners();
+    // 初始绘制文本
+    drawText();
+  }
+
+  // 启动应用
+  init();
+</script>
+</body>
+</html>
+

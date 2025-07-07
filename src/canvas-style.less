@@ -1,0 +1,46 @@
+.signature-container{
+  border: 1px solid #eee;
+  margin: 40px auto;
+  width: 800px;
+  height: 460px;
+  display: flex;
+  flex-direction: column;
+
+  .signature-action{
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .signature-warp-area{
+    flex: 1;
+    border-top: 1px solid #eee;
+  }
+}
+
+.signature-warp-area{
+  position: relative;
+  .canvas-layer{
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .signature-pad{
+    cursor: crosshair;
+    border-width: 1px;
+    border-style: dashed;
+    border-color: rgb(209 213 219 / 1);
+  }
+  /*背景提示信息*/
+  #textCanvas{
+  }
+
+  /*签字绘制区域*/
+  #signatureCanvas{}
+
+}

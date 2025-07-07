@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas中文文本展示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#3B82F6',
+              secondary: '#10B981',
+              neutral: '#F3F4F6',
+            },
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+          }
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .canvas-container {
+                @apply relative w-full bg-white rounded-lg shadow-lg overflow-hidden;
+            }
+            .control-panel {
+                @apply grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg;
+            }
+            .control-group {
+                @apply flex flex-col;
+            }
+            .control-label {
+                @apply text-sm font-medium text-gray-700 mb-1;
+            }
+            .control-input {
+                @apply px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 font-sans">
+<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden">
+    <header class="bg-gradient-to-r from-primary to-secondary text-white p-6">
+        <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold mb-2">Canvas中文文本演示</h1>
+        <p class="text-gray-100">在HTML Canvas中展示和自定义中文文本</p>
+    </header>
+
+    <main class="p-6">
+        <div class="canvas-container h-[400px] mb-6">
+            <canvas id="textCanvas" class="w-full h-full"></canvas>
+        </div>
+
+        <div class="control-panel mb-6">
+            <div class="control-group">
+                <label for="textInput" class="control-label">输入文本</label>
+                <input type="text" id="textInput" class="control-input" placeholder="请输入中文文本" value="你好，Canvas!">
+            </div>
+
+            <div class="control-group">
+                <label for="fontFamily" class="control-label">选择字体</label>
+                <select id="fontFamily" class="control-input">
+                    <option value="SimHei">黑体</option>
+                    <option value="Microsoft YaHei">微软雅黑</option>
+                    <option value="SimSun">宋体</option>
+                    <option value="KaiTi">楷体</option>
+                    <option value="FangSong">仿宋</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="fontSize" class="control-label">字体大小</label>
+                <input type="range" id="fontSize" min="12" max="72" value="36" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>12px</span>
+                    <span id="fontSizeValue">36px</span>
+                    <span>72px</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="fontWeight" class="control-label">字体粗细</label>
+                <select id="fontWeight" class="control-input">
+                    <option value="normal">正常</option>
+                    <option value="bold">加粗</option>
+                    <option value="bolder">更粗</option>
+                    <option value="lighter">更细</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="300">300</option>
+                    <option value="400">400</option>
+                    <option value="500">500</option>
+                    <option value="600">600</option>
+                    <option value="700">700</option>
+                    <option value="800">800</option>
+                    <option value="900">900</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="fontStyle" class="control-label">字体样式</label>
+                <select id="fontStyle" class="control-input">
+                    <option value="normal">正常</option>
+                    <option value="italic">斜体</option>
+                    <option value="oblique">倾斜</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="textAlign" class="control-label">文本对齐</label>
+                <select id="textAlign" class="control-input">
+                    <option value="left">左对齐</option>
+                    <option value="center">居中</option>
+                    <option value="right">右对齐</option>
+                </select>
+            </div>
+
+            <div class="control-group md:col-span-3">
+                <label for="textColor" class="control-label">文本颜色</label>
+                <input type="color" id="textColor" class="w-full h-10 border border-gray-300 rounded-md cursor-pointer" value="#333333">
+            </div>
+        </div>
+
+        <div class="bg-blue-50 p-4 rounded-lg mb-6">
+            <h3 class="text-lg font-semibold text-blue-800 mb-2 flex items-center">
+                <i class="fa fa-info-circle mr-2"></i>技术说明
+            </h3>
+            <p class="text-gray-700 mb-2">HTML Canvas提供了强大的文本渲染能力，通过以下关键API可以实现中文文本的自定义展示：</p>
+            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                <li><code>context.font</code> - 设置字体样式、粗细、大小和字体族</li>
+                <li><code>context.fillText()</code> - 填充文本</li>
+                <li><code>context.strokeText()</code> - 描边文本</li>
+                <li><code>context.textAlign</code> - 设置文本对齐方式</li>
+                <li><code>context.textBaseline</code> - 设置文本基线</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white p-4 text-center">
+        <p>© 2025 Canvas中文文本展示演示 | 使用Tailwind CSS和Font Awesome构建</p>
+    </footer>
+</div>
+
+<script>
+  // 获取DOM元素
+  const canvas = document.getElementById('textCanvas');
+  const ctx = canvas.getContext('2d');
+  const textInput = document.getElementById('textInput');
+  const fontFamily = document.getElementById('fontFamily');
+  const fontSize = document.getElementById('fontSize');
+  const fontSizeValue = document.getElementById('fontSizeValue');
+  const fontWeight = document.getElementById('fontWeight');
+  const fontStyle = document.getElementById('fontStyle');
+  const textAlign = document.getElementById('textAlign');
+  const textColor = document.getElementById('textColor');
+
+  // 设置Canvas尺寸
+  function resizeCanvas() {
+    const container = canvas.parentElement;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    drawText(); // 重绘文本
+  }
+
+  // 初始化时调整Canvas尺寸
+  resizeCanvas();
+
+  // 窗口大小变化时调整Canvas尺寸
+  window.addEventListener('resize', resizeCanvas);
+
+  // 更新字体大小显示
+  fontSize.addEventListener('input', () => {
+    fontSizeValue.textContent = `${fontSize.value}px`;
+    drawText();
+  });
+
+  // 监听所有控件的变化事件
+  [textInput, fontFamily, fontWeight, fontStyle, textAlign, textColor].forEach(element => {
+    element.addEventListener('input', drawText);
+  });
+
+  // 绘制文本函数
+  function drawText() {
+    // 清除Canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 获取当前设置值
+    const text = textInput.value || '请输入文本';
+    const size = fontSize.value;
+    const weight = fontWeight.value;
+    const style = fontStyle.value;
+    const family = fontFamily.value;
+    const align = textAlign.value;
+    const color = textColor.value;
+
+    // 设置字体
+    ctx.font = `${style} ${weight} ${size}px "${family}", sans-serif`;
+
+    // 设置文本对齐
+    ctx.textAlign = align;
+    ctx.textBaseline = 'middle';
+
+    // 设置文本颜色
+    ctx.fillStyle = color;
+
+    // 计算文本位置
+    let x = canvas.width / 2; // 默认居中
+    if (align === 'left') x = 40;
+    if (align === 'right') x = canvas.width - 40;
+
+    const y = canvas.height / 2;
+
+    // 绘制文本
+    ctx.fillText(text, x, y);
+
+    // 绘制辅助线（可选）
+    ctx.strokeStyle = '#ddd';
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, canvas.height);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+
+  // 初始化绘制
+  drawText();
+</script>
+</body>
+</html>
