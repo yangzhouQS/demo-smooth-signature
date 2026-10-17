@@ -26,7 +26,7 @@ importers:
         version: 1.2.5(@rsbuild/core@1.4.4)
       '@rsbuild/plugin-vue':
         specifier: ^1.0.7
-        version: 1.1.0(@rsbuild/core@1.4.4)(vue@3.5.17(typescript@5.8.3))
+        version: 1.1.0(@rsbuild/core@1.4.4)(@vue/compiler-sfc@3.5.17)(vue@3.5.17(typescript@5.8.3))
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -547,8 +547,8 @@ packages:
   serialize-javascript@6.0.2:
     resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
 
-  source-map-js@1.2.1:
-    resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
+  source-map-js@1.2.2:
+    resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
 
   source-map-support@0.5.21:
@@ -770,10 +770,10 @@ snapshots:
       deepmerge: 4.3.1
       reduce-configs: 1.1.0
 
-  '@rsbuild/plugin-vue@1.1.0(@rsbuild/core@1.4.4)(vue@3.5.17(typescript@5.8.3))':
+  '@rsbuild/plugin-vue@1.1.0(@rsbuild/core@1.4.4)(@vue/compiler-sfc@3.5.17)(vue@3.5.17(typescript@5.8.3))':
     dependencies:
       '@rsbuild/core': 1.4.4
-      vue-loader: 17.4.2(vue@3.5.17(typescript@5.8.3))(webpack@5.99.9)
+      vue-loader: 17.4.2(@vue/compiler-sfc@3.5.17)(vue@3.5.17(typescript@5.8.3))(webpack@5.99.9)
       webpack: 5.99.9
     transitivePeerDependencies:
       - '@swc/core'
@@ -881,7 +881,7 @@ snapshots:
       '@vue/shared': 3.5.17
       entities: 4.5.0
       estree-walker: 2.0.2
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   '@vue/compiler-dom@3.5.17':
     dependencies:
@@ -898,7 +898,7 @@ snapshots:
       estree-walker: 2.0.2
       magic-string: 0.30.17
       postcss: 8.5.6
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   '@vue/compiler-ssr@3.5.17':
     dependencies:
@@ -1203,7 +1203,7 @@ snapshots:
     dependencies:
       nanoid: 3.3.11
       picocolors: 1.1.1
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
 
   randombytes@2.1.0:
     dependencies:
@@ -1226,7 +1226,7 @@ snapshots:
     dependencies:
       randombytes: 2.1.0
 
-  source-map-js@1.2.1: {}
+  source-map-js@1.2.2: {}
 
   source-map-support@0.5.21:
     dependencies:
@@ -1277,13 +1277,14 @@ snapshots:
     dependencies:
       vue: 3.5.17(typescript@5.8.3)
 
-  vue-loader@17.4.2(vue@3.5.17(typescript@5.8.3))(webpack@5.99.9):
+  vue-loader@17.4.2(@vue/compiler-sfc@3.5.17)(vue@3.5.17(typescript@5.8.3))(webpack@5.99.9):
     dependencies:
       chalk: 4.1.2
       hash-sum: 2.0.0
       watchpack: 2.4.4
       webpack: 5.99.9
     optionalDependencies:
+      '@vue/compiler-sfc': 3.5.17
       vue: 3.5.17(typescript@5.8.3)
 
   vue@3.5.17(typescript@5.8.3):
